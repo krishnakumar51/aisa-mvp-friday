@@ -14,7 +14,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # We define a directory OUTSIDE the project folder to store all generated files.
 # By default, it creates a folder in your user's home directory.
 # You can change this path to whatever you like (e.g., "D:/AISA_TASKS").
-ARTIFACTS_DIR = Path("C:/Users/kanja/OneDrive/Desktop/SearchLook/CODE") / "AISA_TASKS"
+ARTIFACTS_DIR = Path("C:/Users/kanja/OneDrive/Desktop/SearchLook/ENHNACED/") / "AISA_TASKS"
 
 
 # --- LLM Client Initialization ---
