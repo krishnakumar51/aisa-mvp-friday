@@ -15,7 +15,7 @@ from config import ARTIFACTS_DIR
 from agents.llm_utils import get_llm_response, get_langchain_llm
 
 from langchain.prompts import ChatPromptTemplate
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 # Advanced caching system to reduce LLM calls
 class LLMCache:
@@ -96,13 +96,39 @@ class BlueprintStep(BaseModel):
     screen_name: str = Field(description="The name of the screen or page where the action takes place.")
     description: str = Field(description="A detailed description of the action being performed.")
     action: str = Field(description="The specific action to take, e.g., 'click', 'type_text', 'scroll'.")
-    target_element_description: str = Field(description="Detailed description of the UI element with fallback selectors.")
+    target_element_description: Optional[str] = Field(default="", description="Detailed description of the UI element with fallback selectors.")
     value_to_enter: Optional[Union[str, dict]] = Field(description="The text value to enter or complex selection. Use null if not applicable.")
     associated_image: Optional[str] = Field(default=None, description="The filename of the associated image from the context.")
     prerequisites: List[str] = Field(description="Conditions that must be met before this step.", default=[])
     expected_outcome: str = Field(description="What should happen after this step completes.")
     fallback_actions: List[str] = Field(description="Alternative actions if primary action fails.", default=[])
     timing_notes: Optional[Union[str, dict]] = Field(description="Special timing considerations for this step.")
+    
+    @model_validator(mode="before")
+    def coerce_nulls_to_defaults(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Run *before* normal validation. Convert None/missing fields to safe defaults so
+        LLM-produced nulls don't cause Pydantic validation errors.
+        """
+        # Guard: values may sometimes not be a dict (leave it unchanged)
+        if not isinstance(values, dict):
+            return values
+
+        # String fields -> "" if None/missing
+        string_fields = ["screen_name", "description", "action", "target_element_description", "expected_outcome"]
+        for fld in string_fields:
+            if values.get(fld) is None:
+                values[fld] = ""
+
+        # List fields -> [] if None/missing
+        list_fields = ["prerequisites", "fallback_actions"]
+        for lf in list_fields:
+            if values.get(lf) is None:
+                values[lf] = []
+
+        # Keep timing_notes/value_to_enter/associated_image as-is (allow None)
+        return values
+    
 
 class EnhancedBlueprintOutput(BaseModel):
     summary: BlueprintSummary
@@ -603,6 +629,7 @@ Generate a production-ready blueprint that reflects deep automation expertise.
         blueprint_dict = blueprint_obj.model_dump()
 
         # Add generation metadata with reflection and cache stats
+        blueprint_dict.setdefault("metadata", {})
         blueprint_dict["metadata"].update({
             "generation_timestamp": time.time(),
             "pdf_analysis": pdf_analysis,

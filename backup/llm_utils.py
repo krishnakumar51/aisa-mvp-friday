@@ -64,7 +64,7 @@ def get_llm_response(prompt: str, system_prompt: str, images: List[Path] | None 
                 user_content = prompt + "\n\n[Images were attached (handled by Anthropic in primary).]"
 
             chat_completion = groq_client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+                model="openai/gpt-oss-20b",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_content}
@@ -143,7 +143,7 @@ def get_langchain_llm():
         from langchain_groq import ChatGroq
         return ChatGroq(
             temperature=0.5,
-            model="openai/gpt-oss-120b",
+            model="openai/gpt-oss-20b",
             api_key=groq_api_key
         )
     anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")

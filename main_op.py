@@ -8,10 +8,10 @@ from fastapi.responses import HTMLResponse
 
 # Replace these with your actual imports
 from config import ARTIFACTS_DIR
-from agents.enhanced_agent_manager import run_complete_automation_pipeline, get_pipeline_status
+from enhanced.enhanced_agent_manager import EnhancedAgentManager
 
 app = FastAPI(title="AISA v3 - Intelligent & Robust")
-
+agent_manager = EnhancedAgentManager()
 # --- Phase 3 Change: Persistent State Management ---
 def _get_task_state(seq_no: str) -> dict:
     """Reads the state of a task from its status.json file."""
@@ -158,7 +158,7 @@ async def create_task(
 
     # Enhanced Agent Pipeline
     try:
-        result = run_complete_automation_pipeline(seq_no, pdf_path, instructions, platform)
+        result = agent_manager.run_enhanced_pipeline(seq_no, pdf_path, instructions, platform)
         _update_task_state(seq_no, {
             "status": "completed",
             "result": result,
@@ -179,9 +179,9 @@ async def create_task(
 @app.get("/task/{seq_no}")
 async def get_task_status(seq_no: str):
     # Check enhanced pipeline status
-    enhanced_status = get_pipeline_status(seq_no)
-    if enhanced_status:
-        return enhanced_status
+    # enhanced_status = get_pipeline_status(seq_no)
+    # if enhanced_status:
+    #     return enhanced_status
     
     # Fallback to standard status
     task_info = _get_task_state(seq_no)
