@@ -90,7 +90,7 @@ def get_llm_response(
                 # Re-initialize the client here to ensure API key is used, or rely on the global/config
                 anthropic_api_key = os.getenv("ANTHROPIC_API_KEY") or ANTHROPIC_API_KEY
                 client = Anthropic(api_key=anthropic_api_key)
-                anth_model = os.getenv("ANTHROPIC_MODEL", "claude-3-haiku-20240307") # Changed default model to haiku 3
+                anth_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
                 
                 # Note: Anthropic uses the specific 'image' block format, 
                 # which may require a slightly different helper function 
@@ -213,7 +213,7 @@ def get_langchain_llm(model_name: LLMProvider): # Required Enum parameter
             print("Initializing LangChain ChatAnthropic...")
             return ChatAnthropic(
                 temperature=0.5,
-                model=os.getenv("ANTHROPIC_MODEL", "claude-3-haiku-20240307"),
+                model=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
                 api_key=anthropic_api_key,
                 max_tokens=4096
             )

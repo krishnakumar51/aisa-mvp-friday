@@ -96,11 +96,11 @@ class BlueprintStep(BaseModel):
     screen_name: str = Field(description="The name of the screen or page where the action takes place.")
     description: str = Field(description="A detailed description of the action being performed.")
     action: str = Field(description="The specific action to take, e.g., 'click', 'type_text', 'scroll'.")
-    target_element_description: Optional[str] = Field(default="", description="Detailed description of the UI element with fallback selectors.")
+    target_element_description: Optional[Union[str, dict]] = Field(default="", description="Detailed description of the UI element with fallback selectors.")
     value_to_enter: Optional[Union[str, dict]] = Field(description="The text value to enter or complex selection. Use null if not applicable.")
     associated_image: Optional[str] = Field(default=None, description="The filename of the associated image from the context.")
     prerequisites: List[str] = Field(description="Conditions that must be met before this step.", default=[])
-    expected_outcome: str = Field(description="What should happen after this step completes.")
+    expected_outcome: Union[str, dict] = Field(description="What should happen after this step completes.")
     fallback_actions: List[str] = Field(description="Alternative actions if primary action fails.", default=[])
     timing_notes: Optional[Union[str, dict]] = Field(description="Special timing considerations for this step.")
     
@@ -129,6 +129,50 @@ class BlueprintStep(BaseModel):
         # Keep timing_notes/value_to_enter/associated_image as-is (allow None)
         return values
     
+    @model_validator(mode="before")
+    def coerce_types(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Coerce/flatten common structured fields from LLM into simple primitives to avoid validation failures."""
+        if not isinstance(values, dict):
+            return values
+
+        # Step id coerced to int when possible
+        if "step_id" in values:
+            try:
+                values["step_id"] = int(values["step_id"])
+            except Exception:
+                pass
+
+        # If target_element_description is object -> stringify intelligently
+        ted = values.get("target_element_description")
+        if isinstance(ted, dict):
+            # Prefer explicit 'description' key if present
+            if "description" in ted and isinstance(ted["description"], str):
+                values["target_element_description"] = ted["description"]
+            else:
+                # Fallback: join keys / values
+                try:
+                    flat = []
+                    for k, v in ted.items():
+                        flat.append(f"{k}:{v}")
+                    values["target_element_description"] = " || ".join(flat)
+                except Exception:
+                    values["target_element_description"] = str(ted)
+
+        # If expected_outcome is dict -> stringify
+        eo = values.get("expected_outcome")
+        if isinstance(eo, dict):
+            if "description" in eo and isinstance(eo["description"], str):
+                values["expected_outcome"] = eo["description"]
+            else:
+                values["expected_outcome"] = json.dumps(eo, ensure_ascii=False)
+
+        # Ensure lists are lists
+        if values.get("prerequisites") is None:
+            values["prerequisites"] = []
+        if values.get("fallback_actions") is None:
+            values["fallback_actions"] = []
+
+        return values
 
 class EnhancedBlueprintOutput(BaseModel):
     summary: BlueprintSummary
@@ -520,6 +564,7 @@ This automation involves complex interactions. Implement:
 
 def run_enhanced_agent1(seq_no: str, pdf_path: Path, instructions: str, platform: str) -> dict:
     """Enhanced Agent 1 with advanced blueprint generation, caching, and reflection capabilities"""
+    start_time = time.time()  
     print(f"[{seq_no}] 🚀 Running Enhanced Agent 1: Advanced Blueprint Generation with Smart Caching")
 
     out_dir = ARTIFACTS_DIR / seq_no / "enhanced_agent1"  
@@ -674,7 +719,21 @@ Generate a production-ready blueprint that reflects deep automation expertise.
         print(f"   - Image Analysis: {image_analysis_path}")
         print(f"   - Cache Performance: {cache_stats_path}")
 
-        return blueprint_dict
+
+        result = {
+            "status": "success",
+            "sequence_number": seq_no,
+            "blueprint_path": str(blueprint_path),
+            "blueprint_filename": "blueprint.json",
+            "steps_generated": len(blueprint_dict.get("steps", [])),
+            "complexity_score": blueprint_dict["metadata"].get("complexity_score", 0.5),
+            "execution_time": time.time() - start_time,
+            "cache_stats": agent1_cache.get_stats(),
+            "insights_learned": len(agent1_scratchpad.reflection_log),
+            "blueprint_data": blueprint_dict
+        }
+
+        return result
 
     except Exception as e:
         print(f"[{seq_no}] ❌ Enhanced Agent 1 failed: {e}")

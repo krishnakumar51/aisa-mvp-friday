@@ -568,7 +568,7 @@ DEFAULT_APPIUM_SERVER = "http://localhost:4723"
 # DO NOT parameterize these values - they are device-specific constants
 DEVICE_CONFIG = {
     "platformName": "Android",
-    "platformVersion": "15.0",
+    "platformVersion": "14.0",
     "deviceName": DEFAULT_DEVICE_NAME,
     "udid": DEFAULT_DEVICE_UDID,
     "automationName": "UiAutomator2",

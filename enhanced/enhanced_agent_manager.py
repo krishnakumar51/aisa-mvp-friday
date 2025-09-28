@@ -7,9 +7,9 @@ from typing import Dict, Any, Optional, List
 from fastapi import HTTPException
 
 from config import ARTIFACTS_DIR
-from agents.enhanced_agent_1 import run_enhanced_agent1, agent1_cache, agent1_scratchpad
-from agents.enhanced_agent_2 import run_enhanced_agent2, agent2_cache, agent2_scratchpad, todo_organizer
-from agents.enhanced_agent_3 import run_enhanced_agent3, execution_intelligence
+from enhanced.enhanced_agent_1 import run_enhanced_agent1, agent1_cache, agent1_scratchpad
+from enhanced.enhanced_agent_2 import run_enhanced_agent2, agent2_cache, agent2_scratchpad, todo_organizer
+from enhanced.enhanced_agent_3 import run_enhanced_agent3, execution_intelligence
 
 class EnhancedAgentManager:
     """
